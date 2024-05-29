@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract FaithToken is ERC20 {
-    constructor(address vestManager, address p2eManager, address treasury) ERC20("Faith Token", "FAITH") {
+    constructor(address vestManager, address p2eManager, address treasury) ERC20("Faith LordsForsaken.com", "FAITH") {
         uint256 supply = 100000000000000000000000000; // 100 million
         uint256 vestingShare = supply * 2 / 10;
         uint256 p2eShare = supply * 3 / 10;

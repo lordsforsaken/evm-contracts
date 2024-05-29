@@ -26,14 +26,18 @@ contract CardEdition is ERC721 {
     // the associated ERC20 card pack fungible token
     address public cardPackToken;
 
-    // storage for VRF requests
-    mapping(bytes32 => uint256) requestIdToAmount;
-    mapping(bytes32 => address) requestIdToAddress;
-    uint256 vrfFee;
+    // open card requests
+    struct OpenPackRequest {
+      uint256 amount;
+      address recipient;
+      uint256 clientSeed;
+    }
+    mapping(uint256 => OpenPackRequest) openPackRequests;
 
     // storage for all cards properties
     struct CardProperties {
-      uint256 id;
+      uint256 tokenId;
+      uint256 cardId;
       uint256 foil;
       uint256 rarity;
       uint256 exp;
@@ -41,50 +45,44 @@ contract CardEdition is ERC721 {
     }
     mapping(uint256 => CardProperties) public cardDetails;
 
-    constructor(string memory name, string memory symbol, address _cardPackToken, address vrfCoordinator, address linkToken, uint256 _vrfFee)
+    uint256 nextTokenId;
+
+    constructor(string memory name, string memory symbol, address _cardPackToken)
     ERC721(name, symbol)
-    VRFConsumerBase(vrfCoordinator, linkToken) {
+    {
       cardPackToken = _cardPackToken;
-      vrfFee = _vrfFee;
     }
 
-    function openCardPack(uint256 amount) public returns (bytes32 requestId) {
-      require(LINK.balanceOf(address(this)) >= fee,"Not enough LINK");
-      
-      
+    function openCardPack(uint256 amount, uint256 clientSeed) public {
       // retrieve card pack token from user balance
       ERC20(cardPackToken).transferFrom(msg.sender, address(this), amount);
 
       // save calldata for later
-      requestIdToAmount[requestId] = amount;
-      requestIdToAddress[requestId] = msg.sender;
-
-      // call VRF
-      return requestRandomness(keyHash, fee);
+      openPackRequests[nextTokenId] = OpenPackRequest(amount, msg.sender, clientSeed);
+      nextTokenId++;
     }
 
     // Called by the VRF
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-      uint256 numberOfPacks = requestIdToAmount[requestId] * 10**18;
-      uint256[] rngs = expand(seed, 2*numberOfPacks);
+    function finishOpen(uint256 tokenId, bool isElixir, uint256 serverSeed) external {
+      OpenPackRequest storage req = openPackRequests[tokenId];
+      uint256 numberOfPacks = req.amount * 10**18;
+      uint256 seed = uint(keccak256(abi.encodePacked(block.timestamp , req.clientSeed, serverSeed)));
+      uint256[] memory rngs = expand(seed, 2*numberOfPacks);
 
       // mint 5 cards per pack
       uint256 i = 0;
       while (i < 5*numberOfPacks) {
         uint256 rngFoil = rngs[i*2];
         uint256 rngCardId = rngs[i*2+1];
-        uint256 newItemId = _tokenIds.current();
 
-
-
-        _mint(requestIdToAddress[requestId], newItemId);
-        _tokenIds.increment();
+        // todo: generate from random numbers & save
+        _mint(req.recipient, tokenId);
         i++;
       }
     }
 
     // merge input cardIds into the target NFT
-    function merge(uint256[] cardIds, uint256 targetId) {
+    function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
 
     }
 
