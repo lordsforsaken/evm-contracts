@@ -1,18 +1,17 @@
 import fs from 'fs'
-import hashjs from 'hash.js'
-
-let sha512 = hashjs.sha512
+import keccak256 from 'keccak256'
 
 const rnCount = process.argv[2] || 100
 const seed = process.argv[3] || 'default seed here'
 const filename = 'seeds.txt'
 
-var hash = sha512().update(seed).digest('hex')
+var hash = keccak256(seed).toString('hex')
+console.log(hash)
 var list = [hash]
 while (list.length < rnCount) {
     if (list.length%1000 === 0)
         console.log(list.length)
-    hash = sha512().update(list[list.length-1]).digest('hex')
+    hash = keccak256(list[list.length-1]).toString('hex')
     list.push(hash)
 }
 
