@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBase.sol";
 
 contract CardEdition is ERC721 {
     // thresholds for randomization
@@ -53,6 +52,7 @@ contract CardEdition is ERC721 {
       cardPackToken = _cardPackToken;
     }
 
+    // clientSeed is generated randomly by client
     function openCardPack(uint256 amount, uint256 clientSeed) public {
       // retrieve card pack token from user balance
       ERC20(cardPackToken).transferFrom(msg.sender, address(this), amount);
@@ -62,11 +62,12 @@ contract CardEdition is ERC721 {
       nextTokenId++;
     }
 
-    // Called by the VRF
+    // serverSeed is provably fair and sent by server
+    // https://en.wikipedia-on-ipfs.org/wiki/Provably_fair_algorithm
     function finishOpen(uint256 tokenId, uint256 serverSeed) external {
       OpenPackRequest storage req = openPackRequests[tokenId];
       uint256 numberOfPacks = req.amount * 10**18;
-      uint256 seed = uint(keccak256(abi.encodePacked(block.timestamp , req.clientSeed, serverSeed)));
+      uint256 seed = uint256(keccak256(abi.encodePacked(block.timestamp , req.clientSeed, serverSeed)));
       uint256[] memory rngs = expand(seed, 2*numberOfPacks);
 
       // mint 5 cards per pack
