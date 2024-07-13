@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CardPack is ERC20, Ownable {
-    bool isMintable = true;
-    uint256 maxSupply;
+    bool public isMintable = true;
+    uint256 public maxSupply;
 
     constructor(string memory name, string memory symbol, uint256 initialSupply, uint256 _maxSupply) ERC20(name, symbol) Ownable(msg.sender) {
       maxSupply = _maxSupply;

@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBase.sol";
 
 contract CardEdition is ERC721 {
     // thresholds for randomization
-    uint256[] public thresholdFoil = [200000000]; // 2% for golden
+    uint256[] public thresholdFoil = [200000000]; // 2% chance of golden
     uint256[] public thresholdCard = [
       333333333,  666666667, 1000000000, 1333333333,
       1666666667, 2000000000, 2333333333, 2666666667,
@@ -39,11 +39,11 @@ contract CardEdition is ERC721 {
       uint256 tokenId;
       uint256 cardId;
       uint256 foil;
-      uint256 rarity;
-      uint256 exp;
+      uint256 power;
       uint256 nonce;
     }
     mapping(uint256 => CardProperties) public cardDetails;
+    mapping(uint256 => uint256) public nextNonce;
 
     uint256 nextTokenId;
 
@@ -63,7 +63,7 @@ contract CardEdition is ERC721 {
     }
 
     // Called by the VRF
-    function finishOpen(uint256 tokenId, bool isElixir, uint256 serverSeed) external {
+    function finishOpen(uint256 tokenId, uint256 serverSeed) external {
       OpenPackRequest storage req = openPackRequests[tokenId];
       uint256 numberOfPacks = req.amount * 10**18;
       uint256 seed = uint(keccak256(abi.encodePacked(block.timestamp , req.clientSeed, serverSeed)));
@@ -72,18 +72,53 @@ contract CardEdition is ERC721 {
       // mint 5 cards per pack
       uint256 i = 0;
       while (i < 5*numberOfPacks) {
-        uint256 rngFoil = rngs[i*2];
-        uint256 rngCardId = rngs[i*2+1];
+        uint256 rngFoil = rngs[i*2] % 10000000000;
+        uint256 rngCardId = rngs[i*2+1] % 10000000000;
 
-        // todo: generate from random numbers & save
+        // generate card properties
+        CardProperties memory cp;
+        cp.tokenId = tokenId;
+        cp.cardId = rngToCardId(rngCardId);
+        cp.foil = rngToFoil(rngFoil);
+        cp.power = 1;
+        cp.nonce = nextNonce[cp.cardId];
+        nextNonce[cp.cardId]++;
+        // save card properties
+        cardDetails[tokenId] = cp;
+        // mint the nft
         _mint(req.recipient, tokenId);
         i++;
       }
     }
 
-    // merge input cardIds into the target NFT
-    function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
+    function rngToCardId(uint256 rng) internal view returns(uint256) {
+      for (uint256 i = 0; i < thresholdCard.length; i++)
+        if (rng < thresholdCard[i])
+          return i;
+      return thresholdCard.length;
+    }
 
+    function rngToFoil(uint256 rng) internal view returns(uint256) {
+      for (uint256 i = 0; i < thresholdFoil.length; i++)
+        if (rng < thresholdFoil[i])
+          return i;
+      return thresholdFoil.length;
+    }
+
+    // // useless
+    // function cardIdToRarity(uint256 cardId) {
+    // }
+
+    function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
+      uint256 cardId = cardDetails[targetToken].cardId;
+      uint256 foil = cardDetails[targetToken].foil;
+      for (uint256 i = 0; i < tokenIds.length; i++) {
+        uint256 tokenId = tokenIds[i];
+        require(cardDetails[tokenId].cardId == cardId, "Cannot merge different card id");
+        require(cardDetails[tokenId].foil == foil, "Cannot merge different foil");
+        _burn(tokenId);
+      }
+      cardDetails[targetToken].power += tokenIds.length;
     }
 
     function expand(uint256 randomValue, uint256 n) public pure returns (uint256[] memory expandedValues) {
