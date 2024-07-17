@@ -1,10 +1,18 @@
 import units from './units.js'
+for (let u = 0; u < units.length; u++) {
+  if (units[u].id == 43 || units[u].id == 44 || units[u].id == 45) {
+    units.splice(u,1)
+    u--
+  }
+}
+
+console.log(units.length)
 
 let probaPerRarity = {
-  1: 0.6,
-  2: 0.3,
-  3: 0.08,
-  4: 0.02
+  1: 0.7,
+  2: 0.25,
+  3: 0.04,
+  4: 0.01
 }
 let numberPerRarity = {
   1: 0,
@@ -28,22 +36,28 @@ let cumulativeProbabilities = {}
 for (let i = 0; i < units.length; i++) {
   let r = units[i].rarity
   let c = units[i].id
-  probaPerCard[c] = probaPerRarity[r] / numberPerRarity[r]
-  if (!cumulativeProbabilities[c-1])
-    cumulativeProbabilities[c] = probaPerCard[c]
+  probaPerCard[c] = numberPerRarity[r] / probaPerRarity[r]
+  if (!cumulativeProbabilities[c-1]) {
+    // STUPID HACKY SHIT BECAUSE OF ""PROMO CARDS""
+    if (c == 46) {
+      cumulativeProbabilities[c] = probaPerCard[c] + cumulativeProbabilities[42]
+    } else
+      cumulativeProbabilities[c] = probaPerCard[c]
+  }
+    
   else
     cumulativeProbabilities[c] = probaPerCard[c] + cumulativeProbabilities[c-1]
 }
 
-// console.log(cumulativeProbabilities)
+console.log(probaPerCard)
 
 let thresholdCard = []
 for (const cardId in cumulativeProbabilities) {
   let c = cumulativeProbabilities[cardId];
-  c = Math.round(c * 10000000000);
+  c = Math.round(c * 10000);
   thresholdCard[cardId] = c
 }
 thresholdCard.splice(0,1)
 thresholdCard.splice(thresholdCard.length-1,1)
 
-console.log(thresholdCard)
+//console.log(thresholdCard)
