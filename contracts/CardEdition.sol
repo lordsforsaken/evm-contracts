@@ -155,7 +155,6 @@ contract CardEdition is ERC721, Ownable {
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
       require(cardDetails[tokenId].power > 0, "ERC721Metadata: URI query for nonexistent token");
-
-      return string.concat("https://api.lordsforsaken.com/metadata/", Strings.toString(tokenId));
+      return string.concat("https://so2cwhfbc7.execute-api.us-west-2.amazonaws.com/Production/metadata?tokenId=", Strings.toString(tokenId));
     }
 }
