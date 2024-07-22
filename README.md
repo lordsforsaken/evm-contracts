@@ -1,13 +1,27 @@
-# Sample Hardhat Project
+# Lords Forsaken Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
-
-Try running some of the following tasks:
-
+## 1- Install deps
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
+npm install
+```
+Then modify hardhat.config.cjs to add your network and private keys.
+
+## 2- Generate Seeds
+```shell
+node generateSeeds.js 100000
+```
+
+## 3- Deploy contracts
+```shell
+npx hardhat run scripts/deploy.js --network xxxxx
+```
+
+## 4- Launch scanner to process card pack openings
+```shell
+npx hardhat run scripts/finishOpen.js --network xxxxx
+```
+
+## 5- Flatten contracts individually for block explorer contract verification (optional)
+```shell
+npx hardhat flatten scripts/CardEdition.sol > flat.sol
 ```
