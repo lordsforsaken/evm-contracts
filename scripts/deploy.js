@@ -27,7 +27,7 @@ async function main() {
   await nft.deploymentTransaction().wait(1)
   console.log("Card NFT deployed at:", nft.target);
 
-  let numberOfPacks = 20
+  let numberOfPacks = 1
 
   let tx = await cp.mint(""+numberOfPacks+"000000000000000000", deployer.address)
   await tx.wait(1)
@@ -51,9 +51,9 @@ async function main() {
 
   for (let i = 0; i < nextTokenId; i++) {
     let cardDetail = await nft.cardDetails(i);
-    console.log(cardDetail)
+    // console.log(cardDetail)
     // check no stupid promo cards
-    if (cardDetail[1] == 43 || cardDetail[1] == 44 || cardDetail[1] == 45) {
+    if (cardDetail[1] == 0 || cardDetail[1] == 43 || cardDetail[1] == 44 || cardDetail[1] == 45) {
       console.log('ERR ' + cardDetail[1])
     }
   }

@@ -12,6 +12,8 @@ contract CardEdition is ERC721, Ownable {
       uint256 amount;
       address recipient;
       uint256 clientSeed;
+      uint256 serverSeed;
+      bool isProcessed;
     }
 
     // storage for all cards properties
@@ -40,7 +42,7 @@ contract CardEdition is ERC721, Ownable {
       8905,            9024, 9143,
       9262,            9381, 9500,
       9633,            9767, 9900,
-      9933, 9933, 9933, 9933, 9967
+      9900, 9900, 9900, 9933, 9967
     ];
     // randomized seeds
     uint256 originalSeed = 0;
@@ -58,6 +60,7 @@ contract CardEdition is ERC721, Ownable {
     // custom events
     event Powerup(uint256 targetId, uint256 value);
     event MetadataUpdate(uint256 _tokenId);
+    event OpenPack(uint256 openPackId);
 
     constructor(string memory name, string memory symbol, address _cardPackToken)
     ERC721(name, symbol) Ownable(msg.sender)
@@ -72,17 +75,27 @@ contract CardEdition is ERC721, Ownable {
       ERC20(cardPackToken).transferFrom(msg.sender, address(this), amount * 10**18);
 
       // save calldata for later
-      openPackRequests[nextOpenId] = OpenPackRequest(amount, msg.sender, clientSeed);
+      openPackRequests[nextOpenId] = OpenPackRequest(amount, msg.sender, clientSeed, 0, false);
+      emit OpenPack(nextOpenId);
       nextOpenId++;
     }
 
     // serverSeed is provably fair and sent by server
     // https://en.wikipedia-on-ipfs.org/wiki/Provably_fair_algorithm
+    // verifiable by checking that:
+    // keccak256(openPackRequests[requestId]) = openPackRequests[requestId-1]
+    // for every processed requestId (except the last)
     function finishOpen(uint256 requestId, uint256 serverSeed) external onlyOwner {
       OpenPackRequest storage req = openPackRequests[requestId];
       uint256 numberOfPacks = req.amount;
       require(numberOfPacks > 0, "Could not find open request");
-      seed = uint256(keccak256(abi.encodePacked(block.timestamp , req.clientSeed, serverSeed)));
+      require(req.isProcessed == false, "This request has already been processed");
+      
+      // start of the card generation
+      req.isProcessed = true;
+      req.serverSeed = serverSeed;
+      openPackRequests[requestId] = req;
+      seed = uint256(keccak256(abi.encodePacked(req.clientSeed, serverSeed)));
       originalSeed = seed;
 
       // mint 5 cards per pack
@@ -116,7 +129,7 @@ contract CardEdition is ERC721, Ownable {
     function rngToCardId(uint256 rng) internal view returns(uint256) {
       for (uint256 i = 0; i < thresholdCard.length; i++)
         if (rng < thresholdCard[i])
-          return i;
+          return i + startCardId;
       return thresholdCard.length + startCardId;
     }
 
@@ -128,7 +141,6 @@ contract CardEdition is ERC721, Ownable {
     }
 
     function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
-      require(ownerOf(targetToken) == msg.sender, "Need to own the target");
       uint256 cardId = cardDetails[targetToken].cardId;
       uint256 foil = cardDetails[targetToken].foil;
       for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -137,6 +149,7 @@ contract CardEdition is ERC721, Ownable {
         require(cardDetails[tokenIds[i]].foil == foil, "Cannot merge different foil");
         _burn(tokenIds[i]);
       }
+      require(ownerOf(targetToken) == msg.sender, "Need to own the target");
       cardDetails[targetToken].power += tokenIds.length;
       emit Powerup(targetToken, tokenIds.length);
       emit MetadataUpdate(targetToken);
@@ -155,6 +168,6 @@ contract CardEdition is ERC721, Ownable {
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
       require(cardDetails[tokenId].power > 0, "ERC721Metadata: URI query for nonexistent token");
-      return string.concat("https://so2cwhfbc7.execute-api.us-west-2.amazonaws.com/Production/metadata?tokenId=", Strings.toString(tokenId));
+      return string.concat("https://api.lordsforsaken.com/metadata/", Strings.toString(tokenId));
     }
 }
