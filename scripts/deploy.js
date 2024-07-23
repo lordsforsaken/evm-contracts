@@ -27,7 +27,7 @@ async function main() {
   await nft.deploymentTransaction().wait(1)
   console.log("Card NFT deployed at:", nft.target);
 
-  let numberOfPacks = 1
+  let numberOfPacks = 50
 
   let tx = await cp.mint(""+numberOfPacks+"000000000000000000", deployer.address)
   await tx.wait(1)
@@ -37,11 +37,11 @@ async function main() {
   await tx.wait(1)
   console.log('Approved NFT contract')
 
-  tx = await nft.openCardPack(numberOfPacks, "110312576144209316755475519273325191399479196969863408672967755365405504042024")
+  tx = await nft.openCardPack(numberOfPacks, "123")
   await tx.wait(1)
   console.log('Opening '+numberOfPacks+' card pack')
 
-  tx = await nft.finishOpen(0, "110312576144209316755475511273325191199479191119863408672967755365405504042024")
+  tx = await nft.finishOpen(0, "456")
   let receipt = await tx.wait(1)
   console.log('Done!')
   console.log('Gas Used: '+receipt.gasUsed)

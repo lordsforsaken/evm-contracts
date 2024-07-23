@@ -6,7 +6,7 @@ const [deployer] = await ethers.getSigners();
 console.log("Using account: "+deployer.address)
 const CardEdition = await ethers.getContractFactory("CardEdition");
 const nft = CardEdition.attach(
-  "0x2663227f2497Aa9955c6b58C4658503726Ba801F" // The deployed contract address
+  "0xD08cc9D82c4463F86F04D4564b5895bA23F63147" // The deployed contract address
 );
 
 let openPackRequestId = 0

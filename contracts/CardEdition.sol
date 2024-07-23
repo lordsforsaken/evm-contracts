@@ -18,11 +18,10 @@ contract CardEdition is ERC721, Ownable {
 
     // storage for all cards properties
     struct CardProperties {
-      uint256 tokenId;
-      uint256 cardId;
-      uint256 foil;
-      uint256 power;
-      uint256 nonce;
+      uint16 cardId;
+      uint8 foil;
+      uint16 power;
+      uint32 nonce;
     }
 
     // randomization constants
@@ -49,10 +48,10 @@ contract CardEdition is ERC721, Ownable {
     uint256 seed = 0;
 
     
-    address public cardPackToken; // the ERC20 card pack fungible token
+    address public immutable cardPackToken; // the ERC20 card pack fungible token
     mapping(uint256 => OpenPackRequest) public openPackRequests; // card pack opening storage
     mapping(uint256 => CardProperties) public cardDetails; // card attributes storage
-    mapping(uint256 => uint256) public nextNonce; // individual card id nonces
+    mapping(uint32 => uint32) public nextNonce; // individual card id nonces
     uint256 public nextOpenId = 0;
     uint256 public nextTokenId = 0;
     uint256 startCardId = 1; // the first card id that will be used for this collection
@@ -69,7 +68,7 @@ contract CardEdition is ERC721, Ownable {
     }
 
     // clientSeed is generated randomly by client
-    function openCardPack(uint256 amount, uint256 clientSeed) public {
+    function openCardPack(uint256 amount, uint256 clientSeed) external {
       require(amount>0, "Need to open at least 1 card pack");
       // retrieve card pack token from user balance
       ERC20(cardPackToken).transferFrom(msg.sender, address(this), amount * 10**18);
@@ -92,52 +91,58 @@ contract CardEdition is ERC721, Ownable {
       require(req.isProcessed == false, "This request has already been processed");
       
       // start of the card generation
-      req.isProcessed = true;
-      req.serverSeed = serverSeed;
-      openPackRequests[requestId] = req;
+      openPackRequests[requestId].isProcessed = true;
+      openPackRequests[requestId].serverSeed = serverSeed;
       seed = uint256(keccak256(abi.encodePacked(req.clientSeed, serverSeed)));
       originalSeed = seed;
 
       // mint 5 cards per pack
       uint256 i = 0;
       while (i < 5*numberOfPacks) {
-        uint256 rngFoil = rngp(50);
-        uint256 rngCardId = rngp(10000);
-
         // generate card properties
         uint256 tokenId = nextTokenId;
         nextTokenId++;
-
+        uint256 rngFoil = rngp(50);
+        uint256 rngCardId = rngp(10000);
+      
+        // save card properties
         CardProperties memory cp;
-        cp.tokenId = tokenId;
         cp.cardId = rngToCardId(rngCardId);
         cp.foil = rngToFoil(rngFoil);
         // golden cards
         if (cp.foil == 0)
           cp.foil = 2;
         cp.power = 1;
-        cp.nonce = nextNonce[cp.cardId];
-        nextNonce[cp.cardId]++;
-        // save card properties
+        cp.nonce = uint32(nextNonce[cp.cardId]);
         cardDetails[tokenId] = cp;
+        // increase card nonce
+        nextNonce[cp.cardId]++;
+        
         // mint the nft
         _safeMint(req.recipient, tokenId);
         i++;
       }
     }
 
-    function rngToCardId(uint256 rng) internal view returns(uint256) {
-      for (uint256 i = 0; i < thresholdCard.length; i++)
-        if (rng < thresholdCard[i])
-          return i + startCardId;
-      return thresholdCard.length + startCardId;
+    function rngToCardId(uint256 rng) internal view returns (uint16) {
+      uint256 low = 0;
+      uint256 high = thresholdCard.length;
+      while (low < high) {
+          uint256 mid = low + (high - low) / 2;
+          if (rng < thresholdCard[mid]) {
+              high = mid;
+          } else {
+              low = mid + 1;
+          }
+      }
+      return uint16(low + startCardId);
     }
 
-    function rngToFoil(uint256 rng) internal view returns(uint256) {
+    function rngToFoil(uint256 rng) internal view returns(uint8) {
       for (uint256 i = 0; i < thresholdFoil.length; i++)
         if (rng < thresholdFoil[i])
-          return i;
-      return thresholdFoil.length;
+          return uint8(i);
+      return uint8(thresholdFoil.length);
     }
 
     function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
@@ -150,7 +155,7 @@ contract CardEdition is ERC721, Ownable {
         _burn(tokenIds[i]);
       }
       require(ownerOf(targetToken) == msg.sender, "Need to own the target");
-      cardDetails[targetToken].power += tokenIds.length;
+      cardDetails[targetToken].power += uint16(tokenIds.length);
       emit Powerup(targetToken, tokenIds.length);
       emit MetadataUpdate(targetToken);
     }
@@ -158,7 +163,7 @@ contract CardEdition is ERC721, Ownable {
     function rngp(uint256 divisor) internal returns(uint256) {
       if (seed < 100000000000000) {
         // if tape is running out
-        seed = uint256(keccak256(abi.encode(originalSeed, seed % 100000)));
+        seed = uint256(keccak256(abi.encode(originalSeed, seed)));
         originalSeed = seed;
       }
       uint256 roll = seed % divisor;
