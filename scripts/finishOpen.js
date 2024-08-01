@@ -6,7 +6,7 @@ const [deployer] = await ethers.getSigners();
 console.log("Using account: "+deployer.address)
 const CardEdition = await ethers.getContractFactory("CardEdition");
 const nft = CardEdition.attach(
-  "0xD08cc9D82c4463F86F04D4564b5895bA23F63147" // The deployed contract address
+  "0x9F29880E542913938aA13718A8dE731A64139a38" // The deployed contract address
 );
 
 let openPackRequestId = 0
@@ -15,7 +15,7 @@ getRequest(openPackRequestId)
 async function getRequest(i) {
   console.log(i)
   let req = await nft.openPackRequests(i)
-
+  
   if (req[1] == '0x0000000000000000000000000000000000000000') {
     // empty request
     setTimeout(() => {

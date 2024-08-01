@@ -67,6 +67,26 @@ contract CardEdition is ERC721, Ownable {
       cardPackToken = _cardPackToken;
     }
 
+    function mintPromoCard(uint16 cardId, uint8 foil, address recipient) external onlyOwner {
+      require(cardId == 43 || cardId == 44 || cardId == 45, "Can only mint promo cards");
+      // generate card properties
+      uint256 tokenId = nextTokenId;
+      nextTokenId++;
+    
+      // save card properties
+      CardProperties memory cp;
+      cp.cardId = cardid;
+      cp.foil = foil;
+      cp.power = 1;
+      cp.nonce = uint32(nextNonce[cp.cardId]);
+      cardDetails[tokenId] = cp;
+      // increase card nonce
+      nextNonce[cp.cardId]++;
+      
+      // mint the nft
+      _safeMint(req.recipient, tokenId);
+    }
+
     // clientSeed is generated randomly by client
     function openCardPack(uint256 amount, uint256 clientSeed) external {
       require(amount>0, "Need to open at least 1 card pack");

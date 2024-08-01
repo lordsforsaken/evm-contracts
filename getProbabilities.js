@@ -1,4 +1,6 @@
 import units from './units.js'
+
+// STUPID HACKY SHIT BECAUSE OF ""PROMO CARDS""
 for (let u = 0; u < units.length; u++) {
   if (units[u].id == 43 || units[u].id == 44 || units[u].id == 45) {
     units.splice(u,1)
