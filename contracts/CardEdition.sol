@@ -75,16 +75,16 @@ contract CardEdition is ERC721, Ownable {
     
       // save card properties
       CardProperties memory cp;
-      cp.cardId = cardid;
+      cp.cardId = cardId;
       cp.foil = foil;
       cp.power = 1;
-      cp.nonce = uint32(nextNonce[cp.cardId]);
+      cp.nonce = uint32(nextNonce[cardId]);
       cardDetails[tokenId] = cp;
       // increase card nonce
-      nextNonce[cp.cardId]++;
+      nextNonce[cardId]++;
       
       // mint the nft
-      _safeMint(req.recipient, tokenId);
+      _safeMint(recipient, tokenId);
     }
 
     // clientSeed is generated randomly by client
