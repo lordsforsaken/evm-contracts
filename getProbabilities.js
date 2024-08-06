@@ -8,8 +8,6 @@ for (let u = 0; u < units.length; u++) {
   }
 }
 
-console.log(units.length)
-
 let probaPerRarity = {
   1: 0.7,
   2: 0.25,
@@ -51,7 +49,10 @@ for (let i = 0; i < units.length; i++) {
     cumulativeProbabilities[c] = probaPerCard[c] + cumulativeProbabilities[c-1]
 }
 
-console.log(probaPerCard)
+console.log('Probabilities per card ID:')
+for (const i in probaPerCard) {
+  console.log(i, 1/probaPerCard[i])
+}
 
 let thresholdCard = []
 for (const cardId in cumulativeProbabilities) {
@@ -62,4 +63,5 @@ for (const cardId in cumulativeProbabilities) {
 thresholdCard.splice(0,1)
 thresholdCard.splice(thresholdCard.length-1,1)
 
-//console.log(thresholdCard)
+console.log('Thresholds: ')
+console.log(thresholdCard)
