@@ -170,7 +170,7 @@ contract CardEdition is ERC721, Ownable {
 
       uint256 cardId = cardDetails[targetToken].cardId;
       uint256 foil = cardDetails[targetToken].foil;
-      uint256 totalPower = 0; // To accumulate the power of all burned tokens
+      uint256 totalPower = cardDetails[targetToken].power; // To accumulate the power of all burned tokens
       
       for (uint256 i = 0; i < tokenIds.length; i++) {
         require(ownerOf(tokenIds[i]) == msg.sender, "Need to own the burnt cards");
