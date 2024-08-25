@@ -166,6 +166,7 @@ contract CardEdition is ERC721, Ownable {
     }
 
     function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
+      require(ownerOf(targetToken) == msg.sender, "Need to own the target");
       uint256 cardId = cardDetails[targetToken].cardId;
       uint256 foil = cardDetails[targetToken].foil;
       for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -174,7 +175,6 @@ contract CardEdition is ERC721, Ownable {
         require(cardDetails[tokenIds[i]].foil == foil, "Cannot merge different foil");
         _burn(tokenIds[i]);
       }
-      require(ownerOf(targetToken) == msg.sender, "Need to own the target");
       cardDetails[targetToken].power += uint16(tokenIds.length);
       emit Powerup(targetToken, tokenIds.length);
       emit MetadataUpdate(targetToken);
