@@ -166,18 +166,24 @@ contract CardEdition is ERC721, Ownable {
     }
 
     function merge(uint256[] calldata tokenIds, uint256 targetToken) external {
-      require(ownerOf(targetToken) == msg.sender, "Need to own the target");
+      require(ownerOf(targetToken) == msg.sender, "Need to own the target"); // Ownership check first
+
       uint256 cardId = cardDetails[targetToken].cardId;
       uint256 foil = cardDetails[targetToken].foil;
+      uint256 totalPower = 0; // To accumulate the power of all burned tokens
+      
       for (uint256 i = 0; i < tokenIds.length; i++) {
         require(ownerOf(tokenIds[i]) == msg.sender, "Need to own the burnt cards");
         require(cardDetails[tokenIds[i]].cardId == cardId, "Cannot merge different card id");
         require(cardDetails[tokenIds[i]].foil == foil, "Cannot merge different foil");
+        
+        totalPower += cardDetails[tokenIds[i]].power; // Add the power of the burned token
         _burn(tokenIds[i]);
       }
-      cardDetails[targetToken].power += uint16(tokenIds.length);
-      emit Powerup(targetToken, tokenIds.length);
-      emit MetadataUpdate(targetToken);
+      
+      cardDetails[targetToken].power += uint16(totalPower); // Add total power to the target token
+      emit Powerup(targetToken, totalPower); // Emit the total power added
+      emit MetadataUpdate(targetToken); // Emit metadata update event
     }
 
     function rngp(uint256 divisor) internal returns(uint256) {
