@@ -1,7 +1,15 @@
 async function main() {
 
-  const [deployer] = await ethers.getSigners();
+  console.log(
+    "\n\n" +
+    "************************** WARNING **************************\n" +
+    "Reminder: make sure to run \"database/createTables/addCardsToFree2PlayDeck\" script\n" +
+    "to populate the bot account with all the cards for the free-to-play deck.\n" +
+    "**************************************************************\n\n"
+  );
 
+  const [deployer] = await ethers.getSigners();
+  console.log("deployer address", deployer.address)
   console.log(
   "Deploying contracts with the account:",
   deployer.address
