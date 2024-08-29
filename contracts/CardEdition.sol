@@ -182,7 +182,7 @@ contract CardEdition is ERC721, Ownable {
       }
       
       cardDetails[targetToken].power += uint16(powerupAmount);
-      emit Powerup(targetToken, powerupAmount);
+      emit Powerup(targetToken, cardDetails[targetToken].power); // new power of the target token
       emit MetadataUpdate(targetToken);
     }
 
