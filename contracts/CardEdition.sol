@@ -57,7 +57,7 @@ contract CardEdition is ERC721, Ownable {
     uint256 startCardId = 1; // the first card id that will be used for this collection
 
     // custom events
-    event Powerup(uint256 targetId, uint256 value);
+    event Powerup(uint256 targetId, uint16 newCardPower);
     event MetadataUpdate(uint256 _tokenId);
     event OpenPack(uint256 openPackId);
 
@@ -170,18 +170,16 @@ contract CardEdition is ERC721, Ownable {
 
       uint256 cardId = cardDetails[targetToken].cardId;
       uint256 foil = cardDetails[targetToken].foil;
-      uint256 powerupAmount = 0;
       
       for (uint256 i = 0; i < tokenIds.length; i++) {
         require(ownerOf(tokenIds[i]) == msg.sender, "Need to own the burnt cards");
         require(cardDetails[tokenIds[i]].cardId == cardId, "Cannot merge different card id");
         require(cardDetails[tokenIds[i]].foil == foil, "Cannot merge different foil");
         
-        powerupAmount += cardDetails[tokenIds[i]].power;
+        cardDetails[targetToken].power += cardDetails[tokenIds[i]].power;
         _burn(tokenIds[i]);
       }
       
-      cardDetails[targetToken].power += uint16(powerupAmount);
       emit Powerup(targetToken, cardDetails[targetToken].power); // new power of the target token
       emit MetadataUpdate(targetToken);
     }
